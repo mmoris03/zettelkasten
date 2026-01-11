@@ -292,7 +292,201 @@ Sin embargo, existen dos excepciones que el compilador no va a devolver directam
 > - Expresiones que devuelve algo que sea *invocable*
 > > [!warning] Aunque normalmente serán funciones, existen otras construcciones del lenguaje *invocables* además de las funciones.
 
+## Funciones
+
+> [!NOTE] Funciones
+> Las funciones son entidades de primera clase.
+> Esta es una diferencia clave con los métodos de Java.
+
+> [!example] Ejemplo de variable que almacena una función
+> `(def sqr (fn [x] (* x x)))`
+
+> [!example] Ejemplo de variable que almacena una función
+> `(def sqr (fn [x] (* x x)))`
+
+> [!NOTE] El operador `fn`
+> Este operador recibe:
+> - vector con los nombres de los parámetros de la función.
+> - conjunto de expresiones que serán el cuerpo de la función, siendo el último de ellos el que devuelve la función.
+
+> [!important] Los mapas, los conjuntos, los vectores... son todo funciones.
+
+## Resumen de la sintaxis Clojure vs Java
+
+Todo lo que en Java son declaraciones de variables, estructuras de control de flujo, invocaciones de funciones, expresiones con operadores... en Clojure todo se reduce a una lista en la que el operador es el primer elemento.
+
+- Declaraciones de variables
+
+```java
+int i = 5;
+```
+
+```clojure
+(def i 5)
+```
+
+- Estructuras de control de flujo
+
+```java
+if (x == 0) {
+	return y;
+} else {
+	return z;
+}
+```
+
+```clojure
+(if (zero? x)
+	y
+	z)
+```
+
+- Expresiones con operadores
+
+```java
+x * y * z
+```
+
+```clojure
+(* x y z)
+```
+
+- Invocaciones a funciones
+
+```java
+foo(x, y, z)
+```
+
+```clojure
+(foo x, y, z)
+```
+
+- Acceso a miembros
+
+> [!quote] El . sirve para decirle a Clojure que vamos a escribir código estilo Java
+
+```java
+foo.bar(x)
+```
+
+```clojure
+(. foo bar x)
+```
+
 # Secuencias
+
+Todo esto es "lazy".
+
+```clojure
+(seq coll)
+```
+
+```clojure
+(first coll)
+```
+
+```clojure
+(rest coll)
+```
+
+
+```clojure
+; Descarta los dos primeros elementos de la lista [1 2 3 4 5]
+; Aunque en este caso fue un vector, puede ser una lista o un string.
+(drop 2 [1 2 3 4 5]) -> (3 4 5)
+```
+
+```clojure
+; Se queda con los 9 primeros de la secuencia infinita 1,2,3,4...
+; NOTA: todas estas funciones funcionan de forma lazy.  
+(take 9 (cycle [1 2 3 4])) -> (1 2 3 4 1 2 3 4 1)
+```
+
+```clojure
+; Crea una secuencia que consiste en ir cogiendo una de cada
+(interleave [:a :b :c :d :e] [1 2 3 4 5])
+-> (:a 1 :b 2 :c 3 :d 4 :e 5)
+```
+
+```clojure
+; Parte la lista en 3 trozos
+(partition 3 [1 2 3 4 5 6 7 8 9])
+-> ((1 2 3) (4 5 6) (7 8 9))
+```
+
+```clojure
+; Aplica la función vector para cada par de elementos (uno de cada vector)
+(map vector [:a :b :c :d :e] [1 2 3 4 5])
+-> ([:a 1] [:b 2] [:c 3] [:d 4] [:e 5])
+```
+
+```clojure
+; Le aplica la función str (transforma en un string) a lo que devuelve interpose
+; interpose convierte "asdf" en ("a," "s," "d," "f,")
+(apply str (interpose \, "asdf"))
+-> "a, s, d, f"
+```
+
+```clojure
+(reduce + (range 100)) -> 4950
+```
 # Integración con Java
+
+Clojure utiliza la librería de Java, adoptando su entorno de ejecución, recolector de basura etc.
+No es necesario utilizar librerías externas para integrar código Java.
+
+> [!NOTE] Operador `.`
+> Básicamente sirve para decir que "lo siguiente lo vamos a tratar como si fuera Java".
+> Va a mirar si el segundo argumento es una clase:
+> - Si lo es, es un miembro estático (ya sea un atributo o un método)
+> - En caso contrario, es una instancia.
+> 
+
+```clojure
+; llamada estática
+(. Math PI) ; -> 3.141592...
+
+; llamada a una instancia con .. (que es una macro)
+(.. System getProperties (get "java.version")) ; -> "1.5.0_13"
+```
+
+> [!NOTE] Operador `new`
+
+```clojure
+(new java.util.Date) ; -> Thu Jun 05 12:37:32 EDT 2008
+```
+
+> [!NOTE] Operador `doto`
+> Sirve para evitar código repetitivo típico en Java que consiste en utilizar el operador . muchas veces con el mismo objeto:
+> ```java
+> objeto.metodo1();
+> objeto.metodo2();
+> objeto.metodo3();
+> ```
+
+```clojure
+(doto (JFrame.) (add(JLabel. "Hello World")) pack show)
+
+; JFrame. es una macro que equivale a (new JFrame)
+
+; expands to
+(let* [G__1837 (JFrame.)]
+	(do (. G__1837 (add (JLabel. "Hello World")))
+		(. G__1837 pack)
+		(. G__1837 show)
+	)
+)
+```
+
+Además, cabe destacar que:
+- Los tipos de Clojure son los tipos de Java:
+	- strings de Clojure son los strings de Java.
+	- numbers de Clojure son los Numbers de Java.
+	- collections de Clojure implementan la interfaz Collection.
+		Esto significa que se puede perfectamente coger un vector de Clojure y pasárselo a funciones de Java.
+	- las funciones implementan Callable, Runnable...
+- Abstracciones del núcleo de Clojure (como `seq`), son interfaces de Java.
+- la librería `seq` funciona en objetos de Java que implementen Iterable, Strings y Array.
+- 
 # Concurrencia
 # Q&A
